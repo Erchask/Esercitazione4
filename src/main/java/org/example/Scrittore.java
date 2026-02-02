@@ -1,24 +1,38 @@
-package org.example;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
+import java.util.ArrayList;
 
 
-public class Scrittore {
-    private final File file=new File("Certificato.json");
-    private Gson gson = new GsonBuilder().setPrettyPrinting().create();
+public class Scrittore implements Runnable{
+    private final File file;
+    private final Gson gson;
+    private final ArrayList<Azienda> aziende;
 
-    public void ScriviFile(Certificato c1){
-        String json = gson.toJson(c1);
-        synchronized(lock){
-            try(BufferedWriter bw = new BufferedWriter(new FileWriter(file,true))){
-                bw.write(json);
+
+    public Scrittore(String percorso, ArrayList<Azienda> aziende) {
+        this.file = new File(percorso);
+        this.aziende = aziende;
+        this.gson = new GsonBuilder().setPrettyPrinting().create();
+    }
+
+
+    public void scriviSuFile(ArrayList<Azienda> a) {
+        synchronized(FileLock.LOCK)
+        {
+            try(BufferedWriter bw = new BufferedWriter(new FileWriter(file)))
+            {
+               gson.toJson(a, bw);
+            } catch (IOException e)
+            {
+                e.printStackTrace();
             }
         }
     }
 
 
+    @Override
+    public void run() {
+        scriviSuFile(aziende);
+    }
 }
